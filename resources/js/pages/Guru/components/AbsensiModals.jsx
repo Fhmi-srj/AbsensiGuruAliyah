@@ -61,7 +61,8 @@ export function ModalAbsensiSiswa({ jadwal, tanggal, siswaList, onClose, onSucce
     const [beritaAcara, setBeritaAcara] = useState('');
     const [absensiSiswa, setAbsensiSiswa] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [guruStatus, setGuruStatus] = useState('A'); // Default Alpha
+    const [guruStatus, setGuruStatus] = useState('H'); // Default Hadir
+    const [guruKeterangan, setGuruKeterangan] = useState(''); // Keterangan for guru Izin
     const [siswaExpanded, setSiswaExpanded] = useState(true); // Collapsible state
 
     useEffect(() => {
@@ -109,7 +110,18 @@ export function ModalAbsensiSiswa({ jadwal, tanggal, siswaList, onClose, onSucce
         setAbsensiSiswa(updated);
     };
 
+
     const handleSubmit = async () => {
+        // Validation: ringkasan materi and berita acara are required
+        if (!ringkasanMateri.trim()) {
+            alert('Ringkasan Materi wajib diisi!');
+            return;
+        }
+        if (!beritaAcara.trim()) {
+            alert('Berita Acara wajib diisi!');
+            return;
+        }
+
         setLoading(true);
         try {
             await api.post('/guru-panel/absensi', {
@@ -117,6 +129,7 @@ export function ModalAbsensiSiswa({ jadwal, tanggal, siswaList, onClose, onSucce
                 ringkasan_materi: ringkasanMateri,
                 berita_acara: beritaAcara,
                 guru_status: guruStatus,
+                guru_keterangan: guruStatus === 'I' ? guruKeterangan : null,
                 absensi_siswa: absensiSiswa.map(s => ({
                     siswa_id: s.siswa_id,
                     status: s.status,
@@ -199,25 +212,36 @@ export function ModalAbsensiSiswa({ jadwal, tanggal, siswaList, onClose, onSucce
                                     onClick={() => setGuruStatus('H')}
                                     className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${guruStatus === 'H'
                                         ? 'bg-green-500 text-white shadow-md'
-                                        : 'bg-green-100 text-green-600 hover:bg-green-200'
+                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                         }`}
                                 >H</button>
                                 <button
                                     onClick={() => setGuruStatus('I')}
                                     className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${guruStatus === 'I'
                                         ? 'bg-yellow-500 text-white shadow-md'
-                                        : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                         }`}
                                 >I</button>
                                 <button
                                     onClick={() => setGuruStatus('A')}
                                     className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${guruStatus === 'A'
                                         ? 'bg-red-500 text-white shadow-md'
-                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                         }`}
                                 >A</button>
                             </div>
                         </div>
+
+                        {/* Keterangan field for Guru Izin */}
+                        {guruStatus === 'I' && (
+                            <input
+                                type="text"
+                                value={guruKeterangan}
+                                onChange={e => setGuruKeterangan(e.target.value)}
+                                placeholder="Keterangan izin..."
+                                className="w-full mt-3 border border-yellow-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-yellow-50"
+                            />
+                        )}
                     </div>
 
                     {/* Info Notice */}
@@ -310,21 +334,21 @@ export function ModalAbsensiSiswa({ jadwal, tanggal, siswaList, onClose, onSucce
                                                     onClick={() => updateStatus(index, 'H')}
                                                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${siswa.status === 'H'
                                                         ? 'bg-green-500 text-white'
-                                                        : 'bg-green-100 text-green-600 hover:bg-green-200'
+                                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                         }`}
                                                 >H</button>
                                                 <button
                                                     onClick={() => updateStatus(index, 'I')}
                                                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${siswa.status === 'I'
                                                         ? 'bg-yellow-500 text-white'
-                                                        : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                         }`}
                                                 >I</button>
                                                 <button
                                                     onClick={() => updateStatus(index, 'A')}
                                                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${siswa.status === 'A'
                                                         ? 'bg-red-500 text-white'
-                                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                         }`}
                                                 >A</button>
                                             </div>

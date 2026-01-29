@@ -86,7 +86,7 @@ function Beranda() {
         total: 0,
         hadir: 0,
         izin: 0,
-        sakit: 0,
+        alpha: 0,
         percentage: 0,
     };
 
@@ -132,7 +132,7 @@ function Beranda() {
             </div>
 
             {/* Main Content Area - Rounded top */}
-            <div className="flex-1 bg-white rounded-t-3xl -mt-4 px-4 pt-5 pb-24 space-y-5">
+            <div className="flex-1 bg-white rounded-t-3xl -mt-4 px-4 pt-5 pb-20 space-y-5">
                 {/* Statistik Section - No card, direct content */}
                 <div>
                     <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -213,10 +213,10 @@ function Beranda() {
                             </div>
                             <div className="bg-red-50 rounded-xl p-2.5 text-center">
                                 <p className="text-red-600 font-bold text-lg">
-                                    {currentStats.sakit}
+                                    {currentStats.alpha}
                                 </p>
                                 <p className="text-gray-500 text-[10px]">
-                                    Sakit
+                                    Alpha
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-xl p-2.5 text-center">
@@ -263,15 +263,6 @@ function Beranda() {
                             <i className="fas fa-users text-xl"></i>
                             <span className="text-[10px] font-medium">
                                 Rapat
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => navigate("/guru/riwayat")}
-                            className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl text-white cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
-                        >
-                            <i className="fas fa-history text-xl"></i>
-                            <span className="text-[10px] font-medium">
-                                Riwayat
                             </span>
                         </button>
                         <button
@@ -322,33 +313,56 @@ function Beranda() {
                         </h3>
                         <div className="space-y-2">
                             {reminders.map((reminder, idx) => (
-                                <div
+                                <button
                                     key={idx}
-                                    className="flex items-center gap-3 bg-white rounded-xl px-4 py-3"
+                                    onClick={() => {
+                                        if (reminder.type === 'mengajar' || reminder.type === 'next') {
+                                            navigate('/guru/absensi/mengajar');
+                                        } else if (reminder.type === 'kegiatan') {
+                                            navigate('/guru/absensi/kegiatan');
+                                        } else if (reminder.type === 'rapat') {
+                                            navigate('/guru/absensi/rapat');
+                                        }
+                                    }}
+                                    className="w-full flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-[1.01] text-left"
                                 >
                                     <div
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                            reminder.type === "warning"
-                                                ? "bg-yellow-100"
-                                                : reminder.type === "danger"
-                                                  ? "bg-red-100"
-                                                  : "bg-blue-100"
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                            reminder.priority === "high"
+                                                ? "bg-red-100"
+                                                : reminder.type === "next"
+                                                  ? "bg-blue-100"
+                                                  : "bg-yellow-100"
                                         }`}
                                     >
                                         <i
-                                            className={`fas fa-exclamation ${
-                                                reminder.type === "warning"
-                                                    ? "text-yellow-500"
-                                                    : reminder.type === "danger"
-                                                      ? "text-red-500"
-                                                      : "text-blue-500"
+                                            className={`fas ${
+                                                reminder.type === "mengajar"
+                                                    ? "fa-chalkboard-teacher"
+                                                    : reminder.type === "kegiatan"
+                                                      ? "fa-calendar-check"
+                                                      : reminder.type === "rapat"
+                                                        ? "fa-users"
+                                                        : "fa-clock"
+                                            } ${
+                                                reminder.priority === "high"
+                                                    ? "text-red-500"
+                                                    : reminder.type === "next"
+                                                      ? "text-blue-500"
+                                                      : "text-yellow-500"
                                             }`}
                                         ></i>
                                     </div>
-                                    <p className="text-gray-600 text-sm flex-1">
-                                        {reminder.message}
-                                    </p>
-                                </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-gray-800 text-sm font-medium truncate">
+                                            {reminder.title}
+                                        </p>
+                                        <p className="text-gray-500 text-xs truncate">
+                                            {reminder.description}
+                                        </p>
+                                    </div>
+                                    <i className="fas fa-chevron-right text-gray-300 text-xs"></i>
+                                </button>
                             ))}
                         </div>
                     </div>

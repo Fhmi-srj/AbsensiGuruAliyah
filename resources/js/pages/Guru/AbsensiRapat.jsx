@@ -8,18 +8,35 @@ import {
     ModalAbsensiRapatPeserta,
     ModalAbsensiRapatSekretaris
 } from './components/RapatModals';
+import { AnimatedDateTabs, generateWeekDates } from './components/AnimatedTabs';
+import SwipeableContent from './components/SwipeableContent';
 
 function AbsensiRapat() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [rapatList, setRapatList] = useState([]);
-    const [tanggal, setTanggal] = useState('');
+    const [rapatByDate, setRapatByDate] = useState({});
+
+    // Date selection
+    const weekDates = generateWeekDates();
+    const [selectedDate, setSelectedDate] = useState(weekDates[0].date);
 
     // Modal states
     const [selectedRapat, setSelectedRapat] = useState(null);
     const [modalType, setModalType] = useState(null);
     const [pimpinan, setPimpinan] = useState(null);
     const [pesertaList, setPesertaList] = useState([]);
+
+    // Get today's date
+    const today = new Date().toISOString().split('T')[0];
+    const isToday = selectedDate === today;
+    const currentDateIndex = weekDates.findIndex(d => d.date === selectedDate);
+
+    // Handle swipe navigation
+    const handleSwipeChange = (newIndex) => {
+        if (newIndex >= 0 && newIndex < weekDates.length) {
+            setSelectedDate(weekDates[newIndex].date);
+        }
+    };
 
     // Helper function untuk menentukan status
     const getStatusColor = (status) => {
@@ -48,26 +65,38 @@ function AbsensiRapat() {
         }
     };
 
-    // Fetch rapat hari ini
+    // Fetch rapat for 7 days
     useEffect(() => {
-        fetchRapatHariIni();
+        fetchRapatSeminggu();
     }, []);
 
-    const fetchRapatHariIni = async () => {
+    const fetchRapatSeminggu = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/guru-panel/rapat-hari-ini');
-            setRapatList(response.data.rapat || []);
-            setTanggal(response.data.tanggal || '');
+            const response = await api.get('/guru-panel/rapat-seminggu');
+            setRapatByDate(response.data.rapat || {});
         } catch (err) {
             console.error('Error fetching rapat:', err);
+            setRapatByDate({});
         } finally {
             setLoading(false);
         }
     };
 
+    // Get rapat for selected date
+    const currentRapat = rapatByDate[selectedDate] || [];
+
+    // Get formatted date for display
+    const getFormattedDate = () => {
+        const dateObj = weekDates.find(d => d.date === selectedDate);
+        return dateObj?.fullDate || '';
+    };
+
     // Handle rapat click
     const handleRapatClick = async (rapat) => {
+        // Only allow interaction for today
+        if (!isToday) return;
+
         setSelectedRapat(rapat);
 
         // For sudah_absen, show confirmation modal
@@ -110,16 +139,15 @@ function AbsensiRapat() {
     // Refresh after absensi success
     const handleAbsensiSuccess = async () => {
         handleCloseModal();
-        await fetchRapatHariIni();
+        await fetchRapatSeminggu();
     };
 
     if (loading) {
         return (
             <div className="animate-pulse">
                 <div className="bg-green-200 px-4 py-6"></div>
-                <div className="bg-white mx-4 -mt-3 rounded-xl h-16 mb-4"></div>
                 <div className="p-4 space-y-3">
-                    <div className="h-24 bg-gray-200 rounded-xl"></div>
+                    <div className="bg-gray-200 rounded-xl h-14"></div>
                     <div className="h-24 bg-gray-200 rounded-xl"></div>
                     <div className="h-24 bg-gray-200 rounded-xl"></div>
                 </div>
@@ -132,20 +160,16 @@ function AbsensiRapat() {
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-6 text-white">
                 <h1 className="text-xl font-bold">Absensi Rapat</h1>
-                <p className="text-green-100 text-sm">Pilih rapat untuk mengisi absensi</p>
+                <p className="text-green-100 text-sm">Jadwal rapat mingguan</p>
             </div>
 
-            {/* Today's Info */}
-            <div className="bg-white mx-4 -mt-3 rounded-xl shadow-sm p-4 relative z-10">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-users text-green-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-gray-800">{tanggal}</p>
-                        <p className="text-sm text-gray-500">{rapatList.length} rapat hari ini</p>
-                    </div>
-                </div>
+            {/* Date Tabs */}
+            <div className="px-4 pt-4">
+                <AnimatedDateTabs
+                    dates={weekDates}
+                    activeDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                />
             </div>
 
             {/* Legend */}
@@ -161,27 +185,44 @@ function AbsensiRapat() {
                 </span>
             </div>
 
-            {/* Meeting List */}
-            <div className="p-4 space-y-3">
-                <h2 className="font-semibold text-gray-800">Daftar Rapat</h2>
+            {/* Swipeable Content Area */}
+            <SwipeableContent
+                currentIndex={currentDateIndex}
+                totalItems={weekDates.length}
+                onIndexChange={handleSwipeChange}
+            >
+                {/* Info for non-today */}
+                {!isToday && (
+                    <div className="mx-4 mt-4 p-3 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center gap-2">
+                        <i className="fas fa-info-circle"></i>
+                        <span>Anda hanya bisa melakukan absensi untuk jadwal hari ini</span>
+                    </div>
+                )}
 
-                {rapatList.length === 0 ? (
+                {/* Meeting List */}
+                <div className="p-4 space-y-3">
+                {currentRapat.length === 0 ? (
                     <div className="bg-gray-50 rounded-xl p-8 text-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i className="fas fa-calendar-times text-gray-300 text-2xl"></i>
                         </div>
-                        <p className="text-gray-500 font-medium">Tidak ada rapat hari ini</p>
-                        <p className="text-gray-400 text-sm mt-1">Anda tidak terjadwal dalam rapat hari ini</p>
+                        <p className="text-gray-500 font-medium">Tidak ada rapat</p>
+                        <p className="text-gray-400 text-sm mt-1">Tidak ada rapat pada tanggal ini</p>
                     </div>
                 ) : (
-                    rapatList.map(rapat => {
+                    currentRapat.map(rapat => {
                         const colors = getStatusColor(rapat.status_absensi);
                         const roleBadge = getRoleBadge(rapat.role);
+                        const canInteract = isToday && rapat.status_absensi !== 'sudah_absen';
+
                         return (
                             <button
                                 key={rapat.id}
                                 onClick={() => handleRapatClick(rapat)}
-                                className={`w-full bg-white rounded-xl shadow-sm p-4 cursor-pointer transition-all border-l-4 ${colors.border} hover:shadow-md text-left`}
+                                disabled={!isToday}
+                                className={`w-full bg-white rounded-xl shadow-sm p-4 transition-all border-l-4 ${colors.border} text-left ${
+                                    canInteract ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+                                } ${rapat.status_absensi === 'sudah_absen' ? 'opacity-60' : ''} ${!isToday ? 'opacity-50' : ''}`}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -192,7 +233,7 @@ function AbsensiRapat() {
                                         <p className="font-semibold text-gray-800 truncate">{rapat.agenda_rapat}</p>
                                         {/* Row 2: Location */}
                                         <p className="text-xs text-gray-500 truncate">
-                                            <i className="fas fa-map-marker-alt mr-1"></i>{rapat.tempat}
+                                            <i className="fas fa-map-marker-alt mr-1"></i>{rapat.tempat || '-'}
                                         </p>
                                         {/* Row 3: Role Badge + Time + Status */}
                                         <div className="flex items-center justify-between mt-1.5">
@@ -214,7 +255,8 @@ function AbsensiRapat() {
                         );
                     })
                 )}
-            </div>
+                </div>
+            </SwipeableContent>
 
             {/* Modals */}
             {modalType === 'belum_mulai' && selectedRapat && (
@@ -242,7 +284,7 @@ function AbsensiRapat() {
             {modalType === 'sedang_berlangsung' && selectedRapat && selectedRapat.is_sekretaris && (
                 <ModalAbsensiRapatSekretaris
                     rapat={selectedRapat}
-                    tanggal={tanggal}
+                    tanggal={getFormattedDate()}
                     pimpinan={pimpinan}
                     pesertaList={pesertaList}
                     onClose={handleCloseModal}
@@ -250,9 +292,11 @@ function AbsensiRapat() {
                 />
             )}
 
-            {modalType === 'sedang_berlangsung' && selectedRapat && selectedRapat.is_peserta && !selectedRapat.is_pimpinan && !selectedRapat.is_sekretaris && (
+            {modalType === 'sedang_berlangsung' && selectedRapat && !selectedRapat.is_pimpinan && !selectedRapat.is_sekretaris && (
                 <ModalAbsensiRapatPeserta
                     rapat={selectedRapat}
+                    tanggal={getFormattedDate()}
+                    role="peserta"
                     onClose={handleCloseModal}
                     onSuccess={handleAbsensiSuccess}
                 />

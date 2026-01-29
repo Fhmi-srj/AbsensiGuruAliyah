@@ -71,6 +71,7 @@ Route::prefix('guru-panel')->middleware('auth:sanctum')->group(function () {
 
     // Absensi Kegiatan
     Route::get('kegiatan-hari-ini', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'kegiatanHariIni']);
+    Route::get('kegiatan-seminggu', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'kegiatanSeminggu']);
     Route::get('kegiatan/{id}/detail', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'detailKegiatan']);
     Route::post('kegiatan/absensi', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'simpanAbsensi']);
     Route::post('kegiatan/absensi-pendamping', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'absensiPendamping']);
@@ -79,6 +80,7 @@ Route::prefix('guru-panel')->middleware('auth:sanctum')->group(function () {
 
     // Absensi Rapat
     Route::get('rapat-hari-ini', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'rapatHariIni']);
+    Route::get('rapat-seminggu', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'rapatSeminggu']);
     Route::get('rapat/{id}/detail', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'detailRapat']);
     Route::post('rapat/absensi-pimpinan', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'absensiPimpinan']);
     Route::post('rapat/absensi-peserta', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'absensiPeserta']);
@@ -90,10 +92,8 @@ Route::prefix('guru-panel')->middleware('auth:sanctum')->group(function () {
     Route::get('riwayat/mengajar', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'riwayatMengajar']);
     Route::get('riwayat/mengajar/{id}/detail', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'detailPertemuan']);
     Route::get('riwayat/kegiatan', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'riwayatKegiatan']);
+    Route::get('riwayat/kegiatan/{id}/detail', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'detailKegiatan']);
     Route::get('riwayat/rapat', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'riwayatRapat']);
-
-    // Jadwal (next 7 days)
-    Route::get('jadwal/kegiatan', [\App\Http\Controllers\Api\Guru\GuruJadwalController::class, 'getJadwalKegiatan']);
-    Route::get('jadwal/rapat', [\App\Http\Controllers\Api\Guru\GuruJadwalController::class, 'getJadwalRapat']);
+    Route::get('riwayat/rapat/{id}/detail', [\App\Http\Controllers\Api\Guru\GuruRiwayatController::class, 'detailRapat']);
 });
 

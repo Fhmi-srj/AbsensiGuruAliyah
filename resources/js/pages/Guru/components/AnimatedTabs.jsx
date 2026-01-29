@@ -167,3 +167,109 @@ export function AnimatedDayTabs({ days, activeDay, onDayChange, className = '' }
         </div>
     );
 }
+
+/**
+ * Date tabs for 7 days starting from today
+ * Shows: "Sen 20", "Sel 21", etc.
+ */
+export function AnimatedDateTabs({ dates, activeDate, onDateChange, className = '' }) {
+    const containerRef = useRef(null);
+    const scrollRef = useRef(null);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+    // Get today's date string for comparison
+    const today = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            const activeIndex = dates.findIndex(d => d.date === activeDate);
+            const buttons = scrollRef.current.querySelectorAll('button');
+
+            if (buttons[activeIndex]) {
+                const button = buttons[activeIndex];
+                // Add padding offset (p-2 = 8px)
+                const paddingOffset = 8;
+                setIndicatorStyle({
+                    left: button.offsetLeft + paddingOffset,
+                    width: button.offsetWidth,
+                });
+            }
+        }
+    }, [activeDate, dates]);
+
+    return (
+        <div
+            ref={containerRef}
+            className={`relative bg-white rounded-xl p-2 shadow-sm ${className}`}
+        >
+            {/* Animated indicator */}
+            <div
+                className="absolute top-2 bottom-2 bg-green-500 rounded-lg shadow-md transition-all duration-300 ease-out z-0"
+                style={{
+                    left: indicatorStyle.left,
+                    width: indicatorStyle.width,
+                }}
+            />
+
+            {/* Date buttons - Grid layout for 7 equal columns */}
+            <div 
+                ref={scrollRef}
+                className="grid grid-cols-7 gap-0.5 relative"
+            >
+                {dates.map((dateItem) => {
+                    const isToday = dateItem.date === today;
+                    const isActive = dateItem.date === activeDate;
+                    
+                    return (
+                        <button
+                            key={dateItem.date}
+                            onClick={() => onDateChange(dateItem.date)}
+                            className={`relative z-10 py-2 rounded-lg text-xs font-medium transition-colors duration-200 text-center flex flex-col items-center ${
+                                isActive
+                                    ? 'text-white'
+                                    : isToday
+                                        ? 'text-green-600 font-bold'
+                                        : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <span className="text-[10px]">{dateItem.dayName}</span>
+                            <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{dateItem.dayNum}</span>
+                            {isToday && !isActive && (
+                                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full"></span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Helper function to generate 7 dates starting from today
+ * Shows: Today, Tomorrow, ..., up to 7 days total
+ */
+export function generateWeekDates() {
+    const dates = [];
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    
+    for (let i = 0; i < 7; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        
+        dates.push({
+            date: date.toISOString().split('T')[0], // YYYY-MM-DD
+            dayName: dayNames[date.getDay()],
+            dayNum: date.getDate(),
+            fullDate: date.toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            }),
+        });
+    }
+    
+    return dates;
+}
+

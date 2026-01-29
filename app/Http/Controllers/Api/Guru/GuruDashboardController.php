@@ -330,21 +330,21 @@ class GuruDashboardController extends Controller
                 'total' => $mengajarTotal,
                 'hadir' => $mengajarHadir,
                 'izin' => 0,
-                'sakit' => 0,
+                'alpha' => 0,
                 'percentage' => $mengajarTotal > 0 ? 100 : 0, // All entries = 100% hadir
             ],
             'kegiatan' => [
                 'total' => $kegiatanTotal,
                 'hadir' => $kegiatanHadir,
                 'izin' => 0,
-                'sakit' => 0,
+                'alpha' => 0,
                 'percentage' => $kegiatanTotal > 0 ? round($kegiatanHadir / $kegiatanTotal * 100) : 0,
             ],
             'rapat' => [
                 'total' => $rapatTotal,
                 'hadir' => $rapatHadir,
                 'izin' => 0,
-                'sakit' => 0,
+                'alpha' => 0,
                 'percentage' => $rapatTotal > 0 ? round($rapatHadir / $rapatTotal * 100) : 0,
             ],
         ];
@@ -360,7 +360,7 @@ class GuruDashboardController extends Controller
             ],
             'today' => [
                 'date' => $today->locale('id')->translatedFormat('l, d F Y'),
-                'scheduleCount' => $todaySchedule->count() + $todayActivities->count() + $todayMeetings->count(),
+                'scheduleCount' => $todaySchedule->count(), // Only count mengajar
             ],
             'stats' => $stats,
             'reminders' => $reminders,
@@ -407,24 +407,36 @@ class GuruDashboardController extends Controller
 
         // Check missed teaching schedules
         foreach ($schedule as $item) {
-            if ($item['status'] === 'ongoing' || $item['status'] === 'missed') {
+            if ($item['status'] === 'sedang_berlangsung' || $item['status'] === 'terlewat') {
                 $reminders[] = [
                     'type' => 'mengajar',
                     'title' => 'Belum Absen Mengajar',
                     'description' => "{$item['subject']} - {$item['class']} ({$item['time']})",
-                    'priority' => $item['status'] === 'missed' ? 'high' : 'medium',
+                    'priority' => $item['status'] === 'terlewat' ? 'high' : 'medium',
                 ];
             }
         }
 
         // Check missed activities
         foreach ($activities as $item) {
-            if ($item['status'] === 'ongoing' || $item['status'] === 'missed') {
+            if ($item['status'] === 'sedang_berlangsung' || $item['status'] === 'terlewat') {
                 $reminders[] = [
                     'type' => 'kegiatan',
                     'title' => 'Belum Absen Kegiatan',
                     'description' => "{$item['name']} ({$item['time']})",
-                    'priority' => $item['status'] === 'missed' ? 'high' : 'medium',
+                    'priority' => $item['status'] === 'terlewat' ? 'high' : 'medium',
+                ];
+            }
+        }
+
+        // Check missed/ongoing rapat
+        foreach ($meetings as $item) {
+            if ($item['status'] === 'sedang_berlangsung' || $item['status'] === 'terlewat') {
+                $reminders[] = [
+                    'type' => 'rapat',
+                    'title' => 'Belum Absen Rapat',
+                    'description' => "{$item['name']} - {$item['location']} ({$item['time']})",
+                    'priority' => $item['status'] === 'terlewat' ? 'high' : 'medium',
                 ];
             }
         }
@@ -432,23 +444,25 @@ class GuruDashboardController extends Controller
         // Check upcoming meetings (in next 30 minutes)
         $now = Carbon::createFromFormat('H:i', $currentTime);
         foreach ($meetings as $item) {
-            $meetingStart = Carbon::createFromFormat('H:i', $item['time']);
-            $diffMinutes = $now->diffInMinutes($meetingStart, false);
+            if ($item['status'] === 'belum_mulai') {
+                $meetingStart = Carbon::createFromFormat('H:i', $item['time']);
+                $diffMinutes = $now->diffInMinutes($meetingStart, false);
 
-            if ($diffMinutes > 0 && $diffMinutes <= 30) {
-                $reminders[] = [
-                    'type' => 'rapat',
-                    'title' => "Rapat Dimulai {$diffMinutes} Menit Lagi",
-                    'description' => "{$item['name']} - {$item['location']} ({$item['time']})",
-                    'priority' => 'medium',
-                    'countdown' => $diffMinutes,
-                ];
+                if ($diffMinutes > 0 && $diffMinutes <= 30) {
+                    $reminders[] = [
+                        'type' => 'rapat',
+                        'title' => "Rapat Dimulai {$diffMinutes} Menit Lagi",
+                        'description' => "{$item['name']} - {$item['location']} ({$item['time']})",
+                        'priority' => 'medium',
+                        'countdown' => $diffMinutes,
+                    ];
+                }
             }
         }
 
         // Find next schedule
         foreach ($schedule as $item) {
-            if ($item['status'] === 'upcoming') {
+            if ($item['status'] === 'belum_mulai') {
                 $reminders[] = [
                     'type' => 'next',
                     'title' => 'Jadwal Mengajar Berikutnya',

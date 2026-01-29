@@ -55,5 +55,29 @@ class Rapat extends Model
     {
         return $this->belongsTo(Guru::class, 'sekretaris_id');
     }
+
+    /**
+     * Alias for pimpinanGuru
+     */
+    public function pimpinan()
+    {
+        return $this->belongsTo(Guru::class, 'pimpinan_id');
+    }
+
+    /**
+     * Alias for sekretarisGuru
+     */
+    public function sekretaris()
+    {
+        return $this->belongsTo(Guru::class, 'sekretaris_id');
+    }
+
+    /**
+     * Get the absensi records for this rapat.
+     */
+    public function absensiRapat()
+    {
+        return $this->hasMany(AbsensiRapat::class, 'rapat_id');
+    }
 }
 

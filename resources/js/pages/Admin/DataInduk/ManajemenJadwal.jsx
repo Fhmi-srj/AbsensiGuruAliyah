@@ -55,7 +55,7 @@ function ManajemenJadwal() {
     const [guruSearch, setGuruSearch] = useState('');
     const [showGuruDropdown, setShowGuruDropdown] = useState(false);
 
-    const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const hariList = ['Sabtu', 'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis'];
 
     // Auto-calculate jam selesai based on jam pelajaran (1 JP = 90 menit)
     const calculateJamSelesai = (jamPelajaran, jamMulai) => {
@@ -270,7 +270,7 @@ function ManajemenJadwal() {
             guru_id: '',
             mapel_id: mapelList.find(m => m.status === 'Aktif')?.id || '',
             kelas_id: kelasList.find(k => k.status === 'Aktif')?.id || '',
-            hari: 'Senin',
+            hari: 'Sabtu',
             semester: 'Ganjil',
             tahun_ajaran: '2025/2026',
             status: 'Aktif'
@@ -294,7 +294,7 @@ function ManajemenJadwal() {
             guru_id: item.guru_id || '',
             mapel_id: item.mapel_id || '',
             kelas_id: item.kelas_id || '',
-            hari: item.hari || 'Senin',
+            hari: item.hari || 'Sabtu',
             semester: item.semester || 'Ganjil',
             tahun_ajaran: item.tahun_ajaran || '2025/2026',
             status: item.status || 'Aktif'

@@ -372,9 +372,7 @@ export function ModalAbsensiRapatPeserta({ rapat, tanggal, role, onClose, onSucc
                                                 ? s === 'H' ? 'bg-green-500 text-white shadow-md'
                                                     : s === 'I' ? 'bg-yellow-500 text-white shadow-md'
                                                         : 'bg-red-500 text-white shadow-md'
-                                                : s === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                    : s === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                 }`}
                                         >{s}</button>
                                     ))}
@@ -618,7 +616,7 @@ export function ModalAbsensiRapatSekretaris({ rapat, tanggal, pimpinan, pesertaL
                                 <div className="flex-1 min-w-0"><p className="font-bold text-gray-800 truncate">{sekretarisName || 'Loading...'}</p><p className="text-xs text-gray-400">{sekretarisNip || 'Sekretaris'}</p></div>
                                 <div className="flex gap-1.5">
                                     {['H', 'I', 'A'].map(s => (
-                                        <button key={s} onClick={() => setSekretarisStatus(s)} className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${sekretarisStatus === s ? s === 'H' ? 'bg-green-500 text-white shadow-md' : s === 'I' ? 'bg-yellow-500 text-white shadow-md' : 'bg-red-500 text-white shadow-md' : s === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200' : s === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>{s}</button>
+                                        <button key={s} onClick={() => setSekretarisStatus(s)} className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${sekretarisStatus === s ? s === 'H' ? 'bg-green-500 text-white shadow-md' : s === 'I' ? 'bg-yellow-500 text-white shadow-md' : 'bg-red-500 text-white shadow-md' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{s}</button>
                                     ))}
                                 </div>
                             </div>
@@ -643,7 +641,7 @@ export function ModalAbsensiRapatSekretaris({ rapat, tanggal, pimpinan, pesertaL
                                         <div className="flex-1 min-w-0"><p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1">{pimpinan?.nama || 'Pimpinan'}{pimpinanSelfAttended && <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full">Self</span>}</p><p className="text-xs text-gray-400">{pimpinan?.nip || 'Pimpinan Rapat'}</p></div>
                                         <div className="flex gap-1">
                                             {['H', 'I', 'A'].map(s => (
-                                                <button key={s} onClick={() => setPimpinanStatus(s)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${pimpinanStatus === s ? s === 'H' ? 'bg-green-500 text-white' : s === 'I' ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white' : s === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200' : s === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>{s}</button>
+                                                <button key={s} onClick={() => setPimpinanStatus(s)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${pimpinanStatus === s ? s === 'H' ? 'bg-green-500 text-white' : s === 'I' ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{s}</button>
                                             ))}
                                         </div>
                                     </div>
@@ -672,7 +670,7 @@ export function ModalAbsensiRapatSekretaris({ rapat, tanggal, pimpinan, pesertaL
                                                 <div className="flex-1 min-w-0"><p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1">{guru.nama}{guru.self_attended && <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full">Self</span>}</p><p className="text-xs text-gray-400">{guru.nip || 'Peserta'}</p></div>
                                                 <div className="flex gap-1">
                                                     {['H', 'I', 'A'].map(s => (
-                                                        <button key={s} onClick={() => updatePesertaStatus(index, s)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${guru.status === s ? s === 'H' ? 'bg-green-500 text-white' : s === 'I' ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white' : s === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200' : s === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>{s}</button>
+                                                        <button key={s} onClick={() => updatePesertaStatus(index, s)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${guru.status === s ? s === 'H' ? 'bg-green-500 text-white' : s === 'I' ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{s}</button>
                                                     ))}
                                                 </div>
                                             </div>

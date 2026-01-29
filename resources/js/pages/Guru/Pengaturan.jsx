@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+
+function Pengaturan() {
+    const [loading, setLoading] = useState(true);
+    const [notifications, setNotifications] = useState({
+        jadwal: true,
+        kegiatan: true,
+        rapat: true,
+    });
+
+    // Simulate loading
+    useEffect(() => {
+        const timer = setTimeout(() => setLoading(false), 500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleToggle = (key) => {
+        setNotifications(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Tersimpan',
+            text: 'Pengaturan berhasil diperbarui',
+            timer: 1500,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'rounded-2xl !max-w-xs',
+                title: '!text-base',
+            }
+        });
+    };
+
+    const showComingSoon = (feature) => {
+        Swal.fire({
+            icon: 'info',
+            title: 'Segera Hadir',
+            text: `Fitur ${feature} akan segera tersedia`,
+            confirmButtonColor: '#16a34a',
+            customClass: {
+                popup: 'rounded-2xl !max-w-xs',
+                title: '!text-base',
+                htmlContainer: '!text-sm',
+                confirmButton: 'rounded-xl px-4 !text-xs'
+            }
+        });
+    };
+
+    const settingsSections = [
+        {
+            title: 'Notifikasi',
+            items: [
+                { 
+                    icon: 'fa-calendar-alt', 
+                    label: 'Jadwal Mengajar', 
+                    type: 'toggle', 
+                    key: 'jadwal',
+                    description: 'Pengingat jadwal mengajar'
+                },
+                { 
+                    icon: 'fa-calendar-check', 
+                    label: 'Kegiatan', 
+                    type: 'toggle', 
+                    key: 'kegiatan',
+                    description: 'Notifikasi kegiatan sekolah'
+                },
+                { 
+                    icon: 'fa-users', 
+                    label: 'Rapat', 
+                    type: 'toggle', 
+                    key: 'rapat',
+                    description: 'Pengingat jadwal rapat'
+                },
+            ]
+        },
+        {
+            title: 'Tampilan',
+            items: [
+                { icon: 'fa-moon', label: 'Mode Gelap', type: 'coming-soon', description: 'Tampilan gelap untuk mata' },
+                { icon: 'fa-text-height', label: 'Ukuran Font', type: 'coming-soon', description: 'Sesuaikan ukuran teks' },
+            ]
+        },
+        {
+            title: 'Privasi & Keamanan',
+            items: [
+                { icon: 'fa-lock', label: 'Ubah Password', type: 'link', to: '/guru/profil', tab: 'keamanan' },
+                { icon: 'fa-fingerprint', label: 'Autentikasi Biometrik', type: 'coming-soon' },
+            ]
+        },
+        {
+            title: 'Bantuan',
+            items: [
+                { icon: 'fa-question-circle', label: 'Pusat Bantuan', type: 'coming-soon' },
+                { icon: 'fa-headset', label: 'Hubungi Admin', type: 'coming-soon' },
+                { icon: 'fa-bug', label: 'Laporkan Masalah', type: 'coming-soon' },
+            ]
+        },
+        {
+            title: 'Tentang',
+            items: [
+                { icon: 'fa-info-circle', label: 'Tentang Aplikasi', type: 'info', value: 'v1.0.0' },
+                { icon: 'fa-file-alt', label: 'Syarat & Ketentuan', type: 'coming-soon' },
+                { icon: 'fa-shield-alt', label: 'Kebijakan Privasi', type: 'coming-soon' },
+            ]
+        },
+    ];
+
+    // Skeleton Loading
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 animate-pulse">
+                {/* Header Skeleton */}
+                <div className="bg-green-200 px-4 pt-6 pb-8">
+                    <div className="h-5 bg-green-300 rounded w-28 mb-2"></div>
+                    <div className="h-3 bg-green-300 rounded w-44"></div>
+                </div>
+
+                {/* Content Skeleton */}
+                <div className="bg-white rounded-t-3xl -mt-4 min-h-screen">
+                    <div className="px-4 py-5 space-y-6">
+                        {/* Section 1 */}
+                        <div>
+                            <div className="h-3 bg-gray-200 rounded w-20 mb-3"></div>
+                            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
+                                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                                        <div className="flex-1">
+                                            <div className="h-4 bg-gray-200 rounded w-32 mb-1"></div>
+                                            <div className="h-3 bg-gray-100 rounded w-40"></div>
+                                        </div>
+                                        <div className="w-11 h-6 bg-gray-200 rounded-full"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Section 2 */}
+                        <div>
+                            <div className="h-3 bg-gray-200 rounded w-16 mb-3"></div>
+                            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
+                                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                                        <div className="flex-1">
+                                            <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
+                                            <div className="h-3 bg-gray-100 rounded w-36"></div>
+                                        </div>
+                                        <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Section 3 */}
+                        <div>
+                            <div className="h-3 bg-gray-200 rounded w-28 mb-3"></div>
+                            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
+                                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                                        <div className="flex-1">
+                                            <div className="h-4 bg-gray-200 rounded w-28"></div>
+                                        </div>
+                                        <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 animate-fadeIn">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-green-600 to-green-700 px-4 pt-6 pb-8 text-white">
+                <h1 className="text-lg font-bold mb-1">Pengaturan</h1>
+                <p className="text-green-200 text-xs">Kelola preferensi aplikasi Anda</p>
+            </div>
+
+            {/* Content */}
+            <div className="bg-white rounded-t-3xl -mt-4 pb-20">
+                <div className="px-4 py-5 space-y-6">
+                    {settingsSections.map((section, sectionIdx) => (
+                        <div key={sectionIdx}>
+                            {/* Section Title */}
+                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">
+                                {section.title}
+                            </h3>
+                            
+                            {/* Section Items */}
+                            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100">
+                                {section.items.map((item, itemIdx) => (
+                                    <div
+                                        key={itemIdx}
+                                        className={`flex items-center gap-3 px-4 py-3 ${
+                                            item.type === 'coming-soon' || item.type === 'link' 
+                                                ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' 
+                                                : ''
+                                        }`}
+                                        onClick={() => {
+                                            if (item.type === 'coming-soon') {
+                                                showComingSoon(item.label);
+                                            }
+                                        }}
+                                    >
+                                        {/* Icon */}
+                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <i className={`fas ${item.icon} text-green-600 text-sm`}></i>
+                                        </div>
+                                        
+                                        {/* Label & Description */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-gray-800 font-medium">{item.label}</p>
+                                            {item.description && (
+                                                <p className="text-xs text-gray-400 truncate">{item.description}</p>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Right Side - Toggle, Arrow, or Value */}
+                                        {item.type === 'toggle' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggle(item.key);
+                                                }}
+                                                className={`w-11 h-6 rounded-full transition-colors relative ${
+                                                    notifications[item.key] ? 'bg-green-500' : 'bg-gray-300'
+                                                }`}
+                                            >
+                                                <div
+                                                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                                        notifications[item.key] ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </button>
+                                        )}
+                                        
+                                        {item.type === 'info' && (
+                                            <span className="text-xs text-gray-400">{item.value}</span>
+                                        )}
+                                        
+                                        {(item.type === 'coming-soon' || item.type === 'link') && (
+                                            <i className="fas fa-chevron-right text-gray-300 text-xs"></i>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* App Version Footer */}
+                    <div className="text-center py-4">
+                        <p className="text-xs text-gray-400">MA Mamba'ul Huda</p>
+                        <p className="text-xs text-gray-300">Sistem Absensi Guru v1.0.0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Pengaturan;

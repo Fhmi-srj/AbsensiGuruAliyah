@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../lib/axios';
 import Swal from 'sweetalert2';
+import SwipeableContent from './components/SwipeableContent';
+import { AnimatedTabs } from './components/AnimatedTabs';
 
 function Profil() {
     const { logout } = useAuth();
@@ -76,6 +78,15 @@ function Profil() {
         { id: 'aktivitas', icon: 'fas fa-history', label: 'Aktivitas' },
     ];
 
+    const currentTabIndex = tabs.findIndex(t => t.id === activeTab);
+
+    // Handle swipe navigation
+    const handleSwipeChange = (newIndex) => {
+        if (newIndex >= 0 && newIndex < tabs.length) {
+            setActiveTab(tabs[newIndex].id);
+        }
+    };
+
     if (loading) {
         return (
             <div className="animate-pulse min-h-screen bg-white">
@@ -124,27 +135,22 @@ function Profil() {
                 <p className="text-green-200 text-sm">{profile?.email || '-'}</p>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="flex">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 py-4 flex flex-col items-center gap-1 transition-colors ${activeTab === tab.id
-                                ? 'text-green-600 border-b-2 border-green-600'
-                                : 'text-gray-400 hover:text-gray-600'
-                                }`}
-                        >
-                            <i className={`${tab.icon} text-xl`}></i>
-                            <span className="text-xs font-medium">{tab.label}</span>
-                        </button>
-                    ))}
-                </div>
+            {/* Tab Navigation - Animated */}
+            <div className="bg-white sticky top-0 z-10 px-4 py-3 border-b border-gray-100">
+                <AnimatedTabs
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white">
+            <SwipeableContent
+                currentIndex={currentTabIndex}
+                totalItems={tabs.length}
+                onIndexChange={handleSwipeChange}
+                className="bg-white"
+            >
                 {/* Identitas Tab */}
                 {activeTab === 'identitas' && (
                     <div className="divide-y divide-gray-100">
@@ -277,15 +283,6 @@ function Profil() {
                                 Simpan Password
                             </button>
                         </form>
-
-                        {/* Logout Button */}
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-2 mt-6 py-3 bg-red-50 text-red-600 rounded-xl font-semibold hover:bg-red-100 transition-colors"
-                        >
-                            <i className="fas fa-sign-out-alt"></i>
-                            Keluar
-                        </button>
                     </div>
                 )}
 
@@ -299,10 +296,10 @@ function Profil() {
                         <p className="text-gray-400 text-sm mt-1">Aktivitas login akan ditampilkan di sini</p>
                     </div>
                 )}
-            </div>
+            </SwipeableContent>
 
             {/* Bottom Spacing */}
-            <div className="h-20"></div>
+            <div className="h-16"></div>
         </div>
     );
 }

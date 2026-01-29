@@ -162,6 +162,175 @@ class GuruRapatController extends Controller
     }
 
     /**
+     * Get rapat for 7 days starting from today (for Jadwal view)
+     */
+    public function rapatSeminggu(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            $guru = Guru::find($user->guru_id);
+
+            if (!$guru) {
+                return response()->json(['error' => 'Guru tidak ditemukan'], 404);
+            }
+
+            $today = Carbon::today('Asia/Jakarta');
+            $endDate = Carbon::today('Asia/Jakarta')->addDays(6);
+
+            // Get rapat within 7 days
+            $rapatList = Rapat::where('status', 'Dijadwalkan')
+                ->whereDate('tanggal', '>=', $today)
+                ->whereDate('tanggal', '<=', $endDate)
+                ->where(function ($query) use ($guru) {
+                    $query->where('pimpinan_id', $guru->id)
+                        ->orWhere('sekretaris_id', $guru->id)
+                        ->orWhereJsonContains('peserta_rapat', $guru->id)
+                        ->orWhereJsonContains('peserta_rapat', (string) $guru->id);
+                })
+                ->with(['pimpinanGuru:id,nama,nip', 'sekretarisGuru:id,nama,nip'])
+                ->orderBy('tanggal')
+                ->orderBy('waktu_mulai')
+                ->get();
+
+            // Group by date
+            $rapatByDate = [];
+            for ($i = 0; $i < 7; $i++) {
+                $date = Carbon::today('Asia/Jakarta')->addDays($i);
+                $dateStr = $date->format('Y-m-d');
+                $rapatByDate[$dateStr] = [];
+            }
+
+            foreach ($rapatList as $item) {
+                $dateStr = Carbon::parse($item->tanggal)->format('Y-m-d');
+                
+                // Determine role
+                $isPimpinan = $item->pimpinan_id === $guru->id;
+                $isSekretaris = $item->sekretaris_id === $guru->id;
+                $role = 'peserta';
+                if ($isPimpinan) $role = 'pimpinan';
+                elseif ($isSekretaris) $role = 'sekretaris';
+
+                // Check absensi status FOR THIS DATE
+                $absensi = AbsensiRapat::where('rapat_id', $item->id)->first();
+                $statusAbsensi = $this->getRapatAbsensiStatusForDate($item, $guru, $absensi, $isPimpinan, $isSekretaris, $dateStr);
+
+                $rapatData = [
+                    'id' => $item->id,
+                    'agenda_rapat' => $item->agenda_rapat,
+                    'tempat' => $item->tempat,
+                    'tanggal' => $item->tanggal,
+                    'waktu_mulai' => $item->waktu_mulai,
+                    'waktu_selesai' => $item->waktu_selesai,
+                    'pimpinan' => $item->pimpinanGuru,
+                    'sekretaris' => $item->sekretarisGuru,
+                    'is_pimpinan' => $isPimpinan,
+                    'is_sekretaris' => $isSekretaris,
+                    'role' => $role,
+                    'status_absensi' => $statusAbsensi,
+                ];
+
+                if (isset($rapatByDate[$dateStr])) {
+                    $rapatByDate[$dateStr][] = $rapatData;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'rapat' => $rapatByDate
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Helper to determine rapat absensi status
+     */
+    private function getRapatAbsensiStatus($rapat, $guru, $absensi, $isPimpinan, $isSekretaris)
+    {
+        $now = Carbon::now('Asia/Jakarta');
+        $rapatDate = Carbon::parse($rapat->tanggal)->format('Y-m-d');
+        $mulai = Carbon::parse($rapatDate . ' ' . $rapat->waktu_mulai);
+        $selesai = Carbon::parse($rapatDate . ' ' . $rapat->waktu_selesai);
+
+        if ($absensi) {
+            if ($isSekretaris && $absensi->status === 'submitted') {
+                return 'sudah_absen';
+            }
+            if ($isPimpinan && $absensi->pimpinan_self_attended) {
+                return 'sudah_absen';
+            }
+            if (!$isPimpinan && !$isSekretaris) {
+                $pesertaAbsensi = $absensi->absensi_peserta ?? [];
+                foreach ($pesertaAbsensi as $entry) {
+                    if ($entry['guru_id'] == $guru->id && !empty($entry['self_attended'])) {
+                        return 'sudah_absen';
+                    }
+                }
+            }
+        }
+
+        if ($now->lt($mulai)) {
+            return 'belum_mulai';
+        } elseif ($now->between($mulai, $selesai)) {
+            return 'sedang_berlangsung';
+        } else {
+            return 'terlewat';
+        }
+    }
+
+    /**
+     * Helper to determine rapat absensi status for a specific date
+     * Used for weekly view where status varies by date
+     */
+    private function getRapatAbsensiStatusForDate($rapat, $guru, $absensi, $isPimpinan, $isSekretaris, $targetDate)
+    {
+        $today = Carbon::today('Asia/Jakarta')->format('Y-m-d');
+        $now = Carbon::now('Asia/Jakarta');
+        
+        // Check if already attended
+        if ($absensi) {
+            if ($isSekretaris && $absensi->status === 'submitted') {
+                return 'sudah_absen';
+            }
+            if ($isPimpinan && $absensi->pimpinan_self_attended) {
+                return 'sudah_absen';
+            }
+            if (!$isPimpinan && !$isSekretaris) {
+                $pesertaAbsensi = $absensi->absensi_peserta ?? [];
+                foreach ($pesertaAbsensi as $entry) {
+                    if ($entry['guru_id'] == $guru->id && !empty($entry['self_attended'])) {
+                        return 'sudah_absen';
+                    }
+                }
+            }
+        }
+
+        // If target date is in the future → belum_mulai
+        if ($targetDate > $today) {
+            return 'belum_mulai';
+        }
+        
+        // NOTE: 'terlewat' for past dates disabled for now
+        // Will be useful for Riwayat page later
+        // if ($targetDate < $today) {
+        //     return 'terlewat';
+        // }
+        
+        // Target date is today - check time
+        $mulai = Carbon::parse($targetDate . ' ' . $rapat->waktu_mulai);
+        $selesai = Carbon::parse($targetDate . ' ' . $rapat->waktu_selesai);
+
+        if ($now->lt($mulai)) {
+            return 'belum_mulai';
+        } elseif ($now->between($mulai, $selesai)) {
+            return 'sedang_berlangsung';
+        } else {
+            return 'terlewat';
+        }
+    }
+
+    /**
      * Get detail rapat dengan list peserta untuk form absensi
      */
     public function detailRapat(Request $request, $id): JsonResponse

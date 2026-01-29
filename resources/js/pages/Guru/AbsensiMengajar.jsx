@@ -3,6 +3,7 @@ import api from '../../lib/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { ModalBelumMulai, ModalAbsensiSiswa, ModalSudahAbsen } from './components/AbsensiModals';
 import { AnimatedDayTabs } from './components/AnimatedTabs';
+import SwipeableContent from './components/SwipeableContent';
 
 function AbsensiMengajar() {
     const { user } = useAuth();
@@ -154,6 +155,14 @@ function AbsensiMengajar() {
 
     const currentSchedule = weeklySchedule[selectedDay] || [];
     const isToday = selectedDay === getTodayName();
+    const currentDayIndex = days.indexOf(selectedDay);
+
+    // Handle swipe navigation
+    const handleSwipeChange = (newIndex) => {
+        if (newIndex >= 0 && newIndex < days.length) {
+            setSelectedDay(days[newIndex]);
+        }
+    };
 
     // Loading skeleton
     if (loading) {
@@ -200,16 +209,22 @@ function AbsensiMengajar() {
                 </span>
             </div>
 
-            {/* Info for non-today */}
-            {!isToday && (
-                <div className="mx-4 mt-4 p-3 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center gap-2">
-                    <i className="fas fa-info-circle"></i>
-                    <span>Anda hanya bisa melakukan absensi untuk jadwal hari ini</span>
-                </div>
-            )}
+            {/* Swipeable Content Area */}
+            <SwipeableContent
+                currentIndex={currentDayIndex}
+                totalItems={days.length}
+                onIndexChange={handleSwipeChange}
+            >
+                {/* Info for non-today */}
+                {!isToday && (
+                    <div className="mx-4 mt-4 p-3 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center gap-2">
+                        <i className="fas fa-info-circle"></i>
+                        <span>Anda hanya bisa melakukan absensi untuk jadwal hari ini</span>
+                    </div>
+                )}
 
-            {/* Class List */}
-            <div className="p-4 space-y-3">
+                {/* Class List */}
+                <div className="p-4 space-y-3">
                 {currentSchedule.length > 0 ? (
                     currentSchedule.map(jadwal => {
                         const colors = getStatusColor(jadwal.status);
@@ -258,7 +273,8 @@ function AbsensiMengajar() {
                         <p className="text-gray-400 text-sm">Hari {selectedDay} tidak ada jadwal mengajar</p>
                     </div>
                 )}
-            </div>
+                </div>
+            </SwipeableContent>
 
             {/* Modals */}
             {modalType === 'belum_mulai' && selectedJadwal && (

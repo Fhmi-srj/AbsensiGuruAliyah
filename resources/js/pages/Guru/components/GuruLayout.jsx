@@ -1,22 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import Swal from 'sweetalert2';
 import logoImage from '../../../../images/logo.png';
 
 function GuruLayout({ children }) {
     const [fabOpen, setFabOpen] = useState(false);
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const { logout } = useAuth();
+    const profileMenuRef = useRef(null);
 
     const handleAbsensiClick = (type) => {
         setFabOpen(false);
         navigate(`/guru/absensi/${type}`);
     };
 
+    const handleLogout = async () => {
+        setProfileMenuOpen(false);
+        
+        const result = await Swal.fire({
+            title: 'Keluar dari Aplikasi?',
+            text: 'Anda akan keluar dari akun ini',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            width: '85%',
+            customClass: {
+                popup: 'rounded-2xl !max-w-xs',
+                title: '!text-base',
+                htmlContainer: '!text-sm',
+                confirmButton: 'rounded-xl px-4 !text-xs',
+                cancelButton: 'rounded-xl px-4 !text-xs'
+            }
+        });
+
+        if (result.isConfirmed) {
+            await logout();
+            navigate('/login');
+        }
+    };
+
+    // Close profile menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+                setProfileMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const navItems = [
         { to: '/guru', icon: 'fas fa-home', label: 'Beranda', end: true },
         { to: '/guru/pencarian', icon: 'fas fa-search', label: 'Cari' },
         { type: 'fab' }, // Placeholder for FAB
-        { to: '/guru/jadwal', icon: 'fas fa-calendar-alt', label: 'Jadwal' },
-        { to: '/guru/profil', icon: 'fas fa-user', label: 'Profil' },
+        { to: '/guru/riwayat', icon: 'fas fa-history', label: 'Riwayat' },
+        { to: '/guru/pengaturan', icon: 'fas fa-cog', label: 'Pengaturan' },
     ];
 
     const fabOptions = [
@@ -50,12 +95,40 @@ function GuruLayout({ children }) {
                         <p className="text-[10px] text-green-600">Sistem Absensi Guru</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => navigate('/guru/profil')}
-                    className="p-2 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                    <i className="fas fa-cog text-green-600 text-lg"></i>
-                </button>
+                
+                {/* Profile Icon with Dropdown */}
+                <div className="relative" ref={profileMenuRef}>
+                    <button
+                        onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                        className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+                    >
+                        <i className="fas fa-user-circle text-green-600 text-xl"></i>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {profileMenuOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                            <button
+                                onClick={() => {
+                                    setProfileMenuOpen(false);
+                                    navigate('/guru/profil');
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                            >
+                                <i className="fas fa-user text-green-600"></i>
+                                <span className="text-sm text-gray-700">Profil</span>
+                            </button>
+                            <div className="border-t border-gray-100"></div>
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left"
+                            >
+                                <i className="fas fa-sign-out-alt text-red-500"></i>
+                                <span className="text-sm text-red-600">Keluar</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </header>
 
             {/* Main Content */}
@@ -135,17 +208,18 @@ function GuruLayout({ children }) {
             {/* Bottom Navigation - Above FAB Menu */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
                 <div className="max-w-md mx-auto bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t border-gray-100">
-                    <div className="flex items-center justify-around h-16 px-2">
+                    <div className="grid grid-cols-5 h-16">
                         {navItems.map((item, idx) => {
                             if (item.type === 'fab') {
                                 return (
-                                    <button
-                                        key="fab"
-                                        onClick={() => setFabOpen(!fabOpen)}
-                                        className={`-mt-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 cursor-pointer bg-green-600 border-4 border-white ${fabOpen ? 'bg-red-500' : ''}`}
-                                    >
-                                        <i className={`${fabOpen ? 'fas fa-times' : 'fas fa-clipboard-check'} text-white text-lg`}></i>
-                                    </button>
+                                    <div key="fab" className="flex items-center justify-center">
+                                        <button
+                                            onClick={() => setFabOpen(!fabOpen)}
+                                            className={`-mt-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 cursor-pointer bg-green-600 border-4 border-white ${fabOpen ? 'bg-red-500' : ''}`}
+                                        >
+                                            <i className={`${fabOpen ? 'fas fa-times' : 'fas fa-clipboard-check'} text-white text-lg`}></i>
+                                        </button>
+                                    </div>
                                 );
                             }
                             return (
@@ -155,7 +229,7 @@ function GuruLayout({ children }) {
                                     end={item.end}
                                     onClick={() => setFabOpen(false)}
                                     className={({ isActive }) =>
-                                        `flex flex-col items-center justify-center py-2 px-3 transition-colors ${isActive ? 'text-green-600' : 'text-gray-400 hover:text-green-500'}`
+                                        `flex flex-col items-center justify-center py-2 transition-colors ${isActive ? 'text-green-600' : 'text-gray-400 hover:text-green-500'}`
                                     }
                                 >
                                     <i className={`${item.icon} text-lg`}></i>
@@ -171,3 +245,4 @@ function GuruLayout({ children }) {
 }
 
 export default GuruLayout;
+

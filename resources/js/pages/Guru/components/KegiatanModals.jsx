@@ -326,9 +326,7 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                                                 ? status === 'H' ? 'bg-green-500 text-white shadow-md'
                                                     : status === 'I' ? 'bg-yellow-500 text-white shadow-md'
                                                         : 'bg-red-500 text-white shadow-md'
-                                                : status === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                    : status === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                 }`}
                                         >{status}</button>
                                     ))}
@@ -413,9 +411,7 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                                                                 ? status === 'H' ? 'bg-green-500 text-white'
                                                                     : status === 'I' ? 'bg-yellow-500 text-white'
                                                                         : 'bg-red-500 text-white'
-                                                                : status === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                                    : status === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                                 }`}
                                                         >{status}</button>
                                                     ))}
@@ -528,9 +524,7 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                                                                         ? status === 'H' ? 'bg-green-500 text-white'
                                                                             : status === 'I' ? 'bg-yellow-500 text-white'
                                                                                 : 'bg-red-500 text-white'
-                                                                        : status === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                                            : status === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                                                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                        : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                                         }`}
                                                                 >{status}</button>
                                                             ))}
@@ -926,9 +920,7 @@ export function ModalAbsensiKegiatanPendamping({ kegiatan, tanggal, onClose, onS
                                                 ? s === 'H' ? 'bg-green-500 text-white shadow-md'
                                                     : s === 'I' ? 'bg-yellow-500 text-white shadow-md'
                                                         : 'bg-red-500 text-white shadow-md'
-                                                : s === 'H' ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                    : s === 'I' ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                                 }`}
                                         >{s}</button>
                                     ))}

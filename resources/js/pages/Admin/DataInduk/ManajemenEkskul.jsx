@@ -57,7 +57,7 @@ function ManajemenEkskul() {
     const fileInputRef = useRef(null);
 
     const kategoriList = ['Olahraga', 'Seni', 'Akademik', 'Keagamaan'];
-    const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const hariList = ['Sabtu', 'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis'];
 
     const fetchData = async () => {
         try {

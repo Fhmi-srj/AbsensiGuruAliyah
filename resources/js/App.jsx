@@ -21,8 +21,9 @@ import GuruLayout from './pages/Guru/components/GuruLayout';
 import GuruBeranda from './pages/Guru/Beranda';
 import GuruPencarian from './pages/Guru/Pencarian';
 import GuruRiwayat from './pages/Guru/Riwayat';
-import GuruJadwal from './pages/Guru/Jadwal';
+
 import GuruProfil from './pages/Guru/Profil';
+import GuruPengaturan from './pages/Guru/Pengaturan';
 import AbsensiMengajar from './pages/Guru/AbsensiMengajar';
 import AbsensiKegiatan from './pages/Guru/AbsensiKegiatan';
 import AbsensiRapat from './pages/Guru/AbsensiRapat';
@@ -48,8 +49,9 @@ function App() {
                                     <Route index element={<GuruBeranda />} />
                                     <Route path="pencarian" element={<GuruPencarian />} />
                                     <Route path="riwayat" element={<GuruRiwayat />} />
-                                    <Route path="jadwal" element={<GuruJadwal />} />
+
                                     <Route path="profil" element={<GuruProfil />} />
+                                    <Route path="pengaturan" element={<GuruPengaturan />} />
                                     <Route path="absensi/mengajar" element={<AbsensiMengajar />} />
                                     <Route path="absensi/kegiatan" element={<AbsensiKegiatan />} />
                                     <Route path="absensi/rapat" element={<AbsensiRapat />} />

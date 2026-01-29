@@ -3,14 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../lib/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { ModalAbsensiKegiatanPJ, ModalKegiatanBelumMulai, ModalKegiatanSudahAbsen, ModalAbsensiKegiatanPendamping } from './components/KegiatanModals';
+import { AnimatedDateTabs, generateWeekDates } from './components/AnimatedTabs';
+import SwipeableContent from './components/SwipeableContent';
 
 function AbsensiKegiatan() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [kegiatan, setKegiatan] = useState([]);
-    const [tanggalHariIni, setTanggalHariIni] = useState('');
+    const [kegiatanByDate, setKegiatanByDate] = useState({});
     const [guruData, setGuruData] = useState({ name: '', nip: '' });
+
+    // Date selection
+    const weekDates = generateWeekDates();
+    const [selectedDate, setSelectedDate] = useState(weekDates[0].date);
 
     // Modal states
     const [selectedKegiatan, setSelectedKegiatan] = useState(null);
@@ -18,17 +23,28 @@ function AbsensiKegiatan() {
     const [guruPendamping, setGuruPendamping] = useState([]);
     const [siswaList, setSiswaList] = useState([]);
 
-    // Fetch kegiatan hari ini
+    // Get today's date
+    const today = new Date().toISOString().split('T')[0];
+    const isToday = selectedDate === today;
+    const currentDateIndex = weekDates.findIndex(d => d.date === selectedDate);
+
+    // Handle swipe navigation
+    const handleSwipeChange = (newIndex) => {
+        if (newIndex >= 0 && newIndex < weekDates.length) {
+            setSelectedDate(weekDates[newIndex].date);
+        }
+    };
+
+    // Fetch kegiatan for 7 days
     useEffect(() => {
         const fetchKegiatan = async () => {
             try {
                 setLoading(true);
-                const response = await api.get('/guru-panel/kegiatan-hari-ini');
-                setKegiatan(response.data.kegiatan || []);
-                setTanggalHariIni(response.data.tanggal || '');
+                const response = await api.get('/guru-panel/kegiatan-seminggu');
+                setKegiatanByDate(response.data.kegiatan || {});
             } catch (err) {
                 console.error('Error fetching kegiatan:', err);
-                setKegiatan([]);
+                setKegiatanByDate({});
             } finally {
                 setLoading(false);
             }
@@ -51,6 +67,15 @@ function AbsensiKegiatan() {
         fetchProfile();
     }, []);
 
+    // Get kegiatan for selected date
+    const currentKegiatan = kegiatanByDate[selectedDate] || [];
+
+    // Get formatted date for display
+    const getFormattedDate = () => {
+        const dateObj = weekDates.find(d => d.date === selectedDate);
+        return dateObj?.fullDate || '';
+    };
+
     // Helper function untuk menentukan status
     const getStatusColor = (status) => {
         switch (status) {
@@ -68,6 +93,9 @@ function AbsensiKegiatan() {
 
     // Handle kegiatan click
     const handleKegiatanClick = async (item) => {
+        // Only allow interaction for today
+        if (!isToday) return;
+
         setSelectedKegiatan(item);
 
         // Treat 'terlewat' same as 'sedang_berlangsung'
@@ -100,8 +128,8 @@ function AbsensiKegiatan() {
     const handleAbsensiSuccess = async () => {
         handleCloseModal();
         try {
-            const response = await api.get('/guru-panel/kegiatan-hari-ini');
-            setKegiatan(response.data.kegiatan || []);
+            const response = await api.get('/guru-panel/kegiatan-seminggu');
+            setKegiatanByDate(response.data.kegiatan || {});
         } catch (err) {
             console.error('Error refreshing kegiatan:', err);
         }
@@ -133,21 +161,16 @@ function AbsensiKegiatan() {
             {/* Header */}
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 py-6 text-white">
                 <h1 className="text-xl font-bold">Absensi Kegiatan</h1>
-                <p className="text-green-100 text-sm">Pilih kegiatan untuk mengisi absensi</p>
+                <p className="text-green-100 text-sm">Jadwal kegiatan mingguan</p>
             </div>
 
-
-            {/* Today's Info */}
-            <div className="bg-white mx-4 -mt-3 rounded-xl shadow-sm p-4 relative z-10">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-calendar-check text-green-500 text-lg"></i>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-gray-800">{tanggalHariIni}</p>
-                        <p className="text-sm text-gray-500">{kegiatan.length} kegiatan hari ini</p>
-                    </div>
-                </div>
+            {/* Date Tabs */}
+            <div className="px-4 pt-4">
+                <AnimatedDateTabs
+                    dates={weekDates}
+                    activeDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                />
             </div>
 
             {/* Legend */}
@@ -163,21 +186,36 @@ function AbsensiKegiatan() {
                 </span>
             </div>
 
-            {/* Activity List */}
-            <div className="p-4 space-y-3">
-                <h2 className="font-semibold text-gray-800">Pilih Kegiatan</h2>
-                {kegiatan.length > 0 ? (
-                    kegiatan.map(item => {
+            {/* Swipeable Content Area */}
+            <SwipeableContent
+                currentIndex={currentDateIndex}
+                totalItems={weekDates.length}
+                onIndexChange={handleSwipeChange}
+            >
+                {/* Info for non-today */}
+                {!isToday && (
+                    <div className="mx-4 mt-4 p-3 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center gap-2">
+                        <i className="fas fa-info-circle"></i>
+                        <span>Anda hanya bisa melakukan absensi untuk jadwal hari ini</span>
+                    </div>
+                )}
+
+                {/* Activity List */}
+                <div className="p-4 space-y-3">
+                {currentKegiatan.length > 0 ? (
+                    currentKegiatan.map(item => {
                         const colors = getStatusColor(item.status_absensi);
-                        const canInteract = item.status_absensi !== 'sudah_absen';
+                        const canInteract = isToday && item.status_absensi !== 'sudah_absen';
                         const isPJ = item.role === 'penanggung_jawab';
 
                         return (
                             <button
                                 key={item.id}
                                 onClick={() => handleKegiatanClick(item)}
-                                className={`w-full bg-white rounded-xl shadow-sm p-4 cursor-pointer transition-all border-l-4 ${colors.border
-                                    } ${item.status_absensi === 'sudah_absen' ? 'opacity-60' : 'hover:shadow-md'}`}
+                                disabled={!isToday}
+                                className={`w-full bg-white rounded-xl shadow-sm p-4 transition-all border-l-4 ${colors.border} ${
+                                    canInteract ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+                                } ${item.status_absensi === 'sudah_absen' ? 'opacity-60' : ''} ${!isToday ? 'opacity-50' : ''}`}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -215,16 +253,17 @@ function AbsensiKegiatan() {
                             <i className="fas fa-calendar-times text-gray-400 text-2xl"></i>
                         </div>
                         <p className="text-gray-500 font-medium">Tidak ada kegiatan</p>
-                        <p className="text-gray-400 text-sm">Anda tidak memiliki kegiatan hari ini</p>
+                        <p className="text-gray-400 text-sm">Tidak ada kegiatan pada tanggal ini</p>
                     </div>
                 )}
-            </div>
+                </div>
+            </SwipeableContent>
 
             {/* Modals */}
             {modalType === 'belum_mulai' && selectedKegiatan && (
                 <ModalKegiatanBelumMulai
                     kegiatan={selectedKegiatan}
-                    tanggal={tanggalHariIni}
+                    tanggal={getFormattedDate()}
                     onClose={handleCloseModal}
                 />
             )}
@@ -232,7 +271,7 @@ function AbsensiKegiatan() {
             {modalType === 'sedang_berlangsung' && selectedKegiatan && selectedKegiatan.role === 'penanggung_jawab' && (
                 <ModalAbsensiKegiatanPJ
                     kegiatan={selectedKegiatan}
-                    tanggal={tanggalHariIni}
+                    tanggal={getFormattedDate()}
                     guruPendamping={guruPendamping}
                     siswaList={siswaList}
                     onClose={handleCloseModal}
@@ -252,7 +291,7 @@ function AbsensiKegiatan() {
             {modalType === 'sedang_berlangsung' && selectedKegiatan && selectedKegiatan.role === 'pendamping' && (
                 <ModalAbsensiKegiatanPendamping
                     kegiatan={selectedKegiatan}
-                    tanggal={tanggalHariIni}
+                    tanggal={getFormattedDate()}
                     onClose={handleCloseModal}
                     onSuccess={handleAbsensiSuccess}
                     guruName={guruData.name}

@@ -153,6 +153,182 @@ class GuruKegiatanController extends Controller
         }
     }
 
+    /**
+     * Get kegiatan for 7 days starting from today (for Jadwal view).
+     */
+    public function kegiatanSeminggu(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            $guru = Guru::find($user->guru_id);
+
+            if (!$guru) {
+                return response()->json(['error' => 'Guru tidak ditemukan'], 404);
+            }
+
+            $today = Carbon::today();
+            $endDate = Carbon::today()->addDays(6); // Today + 6 days = 7 days total
+
+            // Get kegiatan where guru is PJ or pendamping within 7 days
+            $kegiatanList = Kegiatan::where('status', 'Aktif')
+                ->where(function ($query) use ($today, $endDate) {
+                    // Kegiatan that overlaps with the 7-day range
+                    $query->where(function ($q) use ($today, $endDate) {
+                        $q->whereDate('waktu_mulai', '<=', $endDate)
+                          ->whereDate('waktu_berakhir', '>=', $today);
+                    });
+                })
+                ->where(function ($query) use ($guru) {
+                    $query->where('penanggung_jawab_id', $guru->id)
+                        ->orWhereJsonContains('guru_pendamping', $guru->id)
+                        ->orWhereJsonContains('guru_pendamping', (string) $guru->id);
+                })
+                ->with('penanggungjawab:id,nama,nip')
+                ->orderBy('waktu_mulai', 'asc')
+                ->get();
+
+            // Process kegiatan and assign to applicable dates
+            $kegiatanByDate = [];
+            
+            for ($i = 0; $i < 7; $i++) {
+                $date = Carbon::today()->addDays($i);
+                $dateStr = $date->format('Y-m-d');
+                $kegiatanByDate[$dateStr] = [];
+            }
+
+            foreach ($kegiatanList as $item) {
+                $guruPendamping = is_array($item->guru_pendamping) ? $item->guru_pendamping : [];
+                $isPj = $item->penanggung_jawab_id === $guru->id;
+                $isPendamping = in_array($guru->id, $guruPendamping) || in_array((string) $guru->id, $guruPendamping);
+                $role = $isPj ? 'penanggung_jawab' : 'pendamping';
+
+                // Check absensi status
+                $absensi = AbsensiKegiatan::where('kegiatan_id', $item->id)->first();
+
+                // Add to all applicable dates with status calculated per date
+                $startDate = Carbon::parse($item->waktu_mulai)->startOfDay();
+                $endActivityDate = Carbon::parse($item->waktu_berakhir)->startOfDay();
+
+                for ($i = 0; $i < 7; $i++) {
+                    $date = Carbon::today('Asia/Jakarta')->addDays($i);
+                    $dateStr = $date->format('Y-m-d');
+                    
+                    if ($date->between($startDate, $endActivityDate)) {
+                        // Calculate status for THIS specific date
+                        $statusAbsensi = $this->getKegiatanAbsensiStatusForDate($item, $guru, $absensi, $isPj, $dateStr);
+
+                        $kegiatanData = [
+                            'id' => $item->id,
+                            'nama_kegiatan' => $item->nama_kegiatan,
+                            'tempat' => $item->tempat,
+                            'waktu_mulai' => $item->waktu_mulai,
+                            'waktu_berakhir' => $item->waktu_berakhir,
+                            'penanggungjawab' => $item->penanggungjawab,
+                            'is_pj' => $isPj,
+                            'is_pendamping' => $isPendamping,
+                            'role' => $role,
+                            'status_absensi' => $statusAbsensi,
+                        ];
+
+                        $kegiatanByDate[$dateStr][] = $kegiatanData;
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'kegiatan' => $kegiatanByDate
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper to determine kegiatan absensi status
+     */
+    private function getKegiatanAbsensiStatus($kegiatan, $guru, $absensi, $isPj)
+    {
+        $now = Carbon::now('Asia/Jakarta');
+        $mulai = Carbon::parse($kegiatan->waktu_mulai);
+        $selesai = Carbon::parse($kegiatan->waktu_berakhir);
+
+        if ($absensi) {
+            if ($isPj) {
+                if ($absensi->status === 'submitted') {
+                    return 'sudah_absen';
+                }
+            } else {
+                $pendampingAbsensi = $absensi->absensi_pendamping ?? [];
+                foreach ($pendampingAbsensi as $entry) {
+                    if ($entry['guru_id'] == $guru->id && !empty($entry['self_attended'])) {
+                        return 'sudah_absen';
+                    }
+                }
+            }
+        }
+
+        if ($now->lt($mulai)) {
+            return 'belum_mulai';
+        } elseif ($now->between($mulai, $selesai)) {
+            return 'sedang_berlangsung';
+        } else {
+            return 'terlewat';
+        }
+    }
+
+    /**
+     * Helper to determine kegiatan absensi status for a specific date
+     * Used for weekly view where status varies by date
+     */
+    private function getKegiatanAbsensiStatusForDate($kegiatan, $guru, $absensi, $isPj, $targetDate)
+    {
+        $today = Carbon::today('Asia/Jakarta')->format('Y-m-d');
+        $now = Carbon::now('Asia/Jakarta');
+        
+        // Check if already attended
+        if ($absensi) {
+            if ($isPj) {
+                if ($absensi->status === 'submitted') {
+                    return 'sudah_absen';
+                }
+            } else {
+                $pendampingAbsensi = $absensi->absensi_pendamping ?? [];
+                foreach ($pendampingAbsensi as $entry) {
+                    if ($entry['guru_id'] == $guru->id && !empty($entry['self_attended'])) {
+                        return 'sudah_absen';
+                    }
+                }
+            }
+        }
+
+        // If target date is in the future → belum_mulai
+        if ($targetDate > $today) {
+            return 'belum_mulai';
+        }
+        
+        // NOTE: 'terlewat' for past dates disabled for now
+        // Will be useful for Riwayat page later
+        // if ($targetDate < $today) {
+        //     return 'terlewat';
+        // }
+        
+        // Target date is today - check time
+        $mulai = Carbon::parse($kegiatan->waktu_mulai);
+        $selesai = Carbon::parse($kegiatan->waktu_berakhir);
+
+        if ($now->lt($mulai)) {
+            return 'belum_mulai';
+        } elseif ($now->between($mulai, $selesai)) {
+            return 'sedang_berlangsung';
+        } else {
+            return 'terlewat';
+        }
+    }
+
 
     /**
      * Get detail kegiatan with siswa peserta.
